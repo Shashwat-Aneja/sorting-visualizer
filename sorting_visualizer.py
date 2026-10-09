@@ -1,9 +1,8 @@
 import time
-import os
 
 
 def clear_console():
-    os.system('cls' if os.name == 'nt' else 'clear')
+    print("\033[2J\033[H", end="")
 
 
 def print_array(arr, message="Sorting..."):
@@ -14,34 +13,39 @@ def print_array(arr, message="Sorting..."):
     time.sleep(0.2)
 
 
-def bubble_sort(arr):
+def render_step(arr, message, enabled):
+    if enabled:
+        print_array(arr, message=message)
+
+
+def bubble_sort(arr, visualize=True):
     n = len(arr)
     for i in range(n):
         for j in range(0, n - i - 1):
-            print_array(arr, message=f"Bubble Sort (i={i}, j={j})")
+            render_step(arr, f"Bubble Sort (i={i}, j={j})", visualize)
             if arr[j] > arr[j + 1]:
                 arr[j], arr[j + 1] = arr[j + 1], arr[j]
     return arr
 
 
-def insertion_sort(arr):
+def insertion_sort(arr, visualize=True):
     for i in range(1, len(arr)):
         key = arr[i]
         j = i - 1
-        print_array(arr, message=f"Insertion Sort (i={i})")
+        render_step(arr, f"Insertion Sort (i={i})", visualize)
         while j >= 0 and key < arr[j]:
             arr[j + 1] = arr[j]
             j -= 1
-            print_array(arr)
+            render_step(arr, "Insertion Sort", visualize)
         arr[j + 1] = key
     return arr
 
 
-def selection_sort(arr):
+def selection_sort(arr, visualize=True):
     for i in range(len(arr)):
         min_idx = i
         for j in range(i + 1, len(arr)):
-            print_array(arr, message=f"Selection Sort (i={i}, j={j})")
+            render_step(arr, f"Selection Sort (i={i}, j={j})", visualize)
             if arr[j] < arr[min_idx]:
                 min_idx = j
         arr[i], arr[min_idx] = arr[min_idx], arr[i]
