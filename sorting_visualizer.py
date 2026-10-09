@@ -66,8 +66,11 @@ def main():
         print(f"{key}. {name}")
 
     choice = input("Enter choice: ")
-    algo_name, algo_func = algorithms.get(choice, ("Bubble Sort", bubble_sort))
+    if choice not in algorithms:
+        print("Invalid choice. Please run the program again and select 1, 2, or 3.")
+        return
 
+    algo_name, algo_func = algorithms[choice]
     print(f"\nRunning {algo_name}...")
     time.sleep(1)
 
