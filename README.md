@@ -15,7 +15,7 @@ This project demonstrates core algorithmic thinking, clean Python coding, and ba
 ---
 
 ## ▶ How It Works
-Numbers are displayed as bars (`#` symbols). As the sorting algorithm progresses, the bars rearrange in each step, making sorting easy to understand.
+Numbers are displayed as bars (`#` symbols). As the sorting algorithm progresses, the bars rearrange in each step, making sorting easy to understand. Bubble Sort stops early when a full pass makes no swaps, so already-sorted inputs do not perform unnecessary passes.
 
 Example:
 ```
@@ -50,6 +50,8 @@ python sorting_visualizer.py
 sorting-visualizer/
 │
 ├── sorting_visualizer.py
+├── tests/
+│   └── test_sorting_visualizer.py
 └── README.md
 ```
 
@@ -71,3 +73,15 @@ This project is great for:
 ---
 
 Built by **Shashwat Aneja**
+
+
+## Run tests
+
+Install pytest, then run the test suite from the repository root:
+
+```bash
+python -m pip install pytest
+python -m pytest -q
+```
+
+The tests cover all three algorithms, empty and single-item lists, duplicate values, and Bubble Sort's early-exit behavior.
