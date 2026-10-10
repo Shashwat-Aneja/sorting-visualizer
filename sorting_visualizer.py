@@ -21,10 +21,14 @@ def render_step(arr, message, enabled):
 def bubble_sort(arr, visualize=True):
     n = len(arr)
     for i in range(n):
+        swapped = False
         for j in range(0, n - i - 1):
             render_step(arr, f"Bubble Sort (i={i}, j={j})", visualize)
             if arr[j] > arr[j + 1]:
                 arr[j], arr[j + 1] = arr[j + 1], arr[j]
+                swapped = True
+        if not swapped:
+            break
     return arr
 
 
