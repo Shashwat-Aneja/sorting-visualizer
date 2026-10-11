@@ -32,3 +32,31 @@ def test_bubble_sort_stops_after_an_already_sorted_pass(monkeypatch):
     assert sorting_visualizer.bubble_sort([1, 2, 3, 4], visualize=False) == [1, 2, 3, 4]
     assert len(comparisons) == 3
 
+
+
+def test_parse_values_accepts_comma_separated_integers():
+    from sorting_visualizer import parse_values
+
+    assert parse_values(" 9, -2, 4 ") == [9, -2, 4]
+
+
+def test_parse_values_rejects_empty_or_non_integer_values():
+    import pytest
+    from sorting_visualizer import parse_values
+
+    with pytest.raises(ValueError):
+        parse_values("1,,3")
+    with pytest.raises(ValueError):
+        parse_values("1,two,3")
+
+
+def test_cli_can_sort_custom_values_without_animation(monkeypatch, capsys):
+    import sorting_visualizer
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: "1")
+    monkeypatch.setattr(sorting_visualizer.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(sorting_visualizer, "clear_console", lambda: None)
+
+    sorting_visualizer.main(["--values", "3,1,2", "--no-visualization"])
+
+    assert "[1, 2, 3]" in capsys.readouterr().out
