@@ -37,6 +37,18 @@ cd sorting-visualizer
 python sorting_visualizer.py
 ```
 
+Sort your own comma-separated values:
+
+```bash
+python sorting_visualizer.py --values 9,3,7,1
+```
+
+Skip the animation when you only need the sorted result:
+
+```bash
+python sorting_visualizer.py --values 9,3,7,1 --no-visualization
+```
+
 ---
 
 ## 🔧 Requirements
