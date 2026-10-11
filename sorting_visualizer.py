@@ -1,4 +1,15 @@
+import argparse
 import time
+
+
+def parse_values(raw):
+    tokens = raw.split(",")
+    if not tokens or any(not token.strip() for token in tokens):
+        raise ValueError("provide comma-separated integers without empty values")
+    try:
+        return [int(token.strip()) for token in tokens]
+    except ValueError as exc:
+        raise ValueError("values must be comma-separated integers") from exc
 
 
 def clear_console():
@@ -56,8 +67,12 @@ def selection_sort(arr, visualize=True):
     return arr
 
 
-def main():
-    arr = [5, 3, 8, 6, 2, 7, 4, 1]
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Visualize sorting algorithms in the terminal")
+    parser.add_argument("--values", type=parse_values, default=[5, 3, 8, 6, 2, 7, 4, 1], help="Comma-separated integers to sort")
+    parser.add_argument("--no-visualization", action="store_true", help="Sort and print the result without animation")
+    args = parser.parse_args(argv)
+    arr = args.values
     algorithms = {
         "1": ("Bubble Sort", bubble_sort),
         "2": ("Insertion Sort", insertion_sort),
@@ -78,7 +93,7 @@ def main():
     print(f"\nRunning {algo_name}...")
     time.sleep(1)
 
-    sorted_arr = algo_func(arr.copy())
+    sorted_arr = algo_func(arr.copy(), visualize=not args.no_visualization)
 
     clear_console()
     print(f"{algo_name} Completed 🎉")
