@@ -1,7 +1,7 @@
-from sorting_visualizer import bubble_sort, insertion_sort, selection_sort
+from sorting_visualizer import bubble_sort, insertion_sort, merge_sort, selection_sort
 
 
-SORTERS = (bubble_sort, insertion_sort, selection_sort)
+SORTERS = (bubble_sort, insertion_sort, selection_sort, merge_sort)
 
 
 def test_sorters_order_unsorted_values_without_visualization():
@@ -19,6 +19,7 @@ def test_sorters_preserve_duplicate_values():
     for sorter in SORTERS:
         assert sorter([3, 1, 3, 2, 1], visualize=False) == [1, 1, 2, 3, 3]
 
+
 def test_bubble_sort_stops_after_an_already_sorted_pass(monkeypatch):
     import sorting_visualizer
 
@@ -31,7 +32,6 @@ def test_bubble_sort_stops_after_an_already_sorted_pass(monkeypatch):
 
     assert sorting_visualizer.bubble_sort([1, 2, 3, 4], visualize=False) == [1, 2, 3, 4]
     assert len(comparisons) == 3
-
 
 
 def test_parse_values_accepts_comma_separated_integers():
@@ -60,3 +60,26 @@ def test_cli_can_sort_custom_values_without_animation(monkeypatch, capsys):
     sorting_visualizer.main(["--values", "3,1,2", "--no-visualization"])
 
     assert "[1, 2, 3]" in capsys.readouterr().out
+
+
+def test_merge_sort_mutates_the_supplied_list():
+    values = [9, -1, 4, 4, 0]
+
+    result = merge_sort(values, visualize=False)
+
+    assert result is values
+    assert values == [-1, 0, 4, 4, 9]
+
+
+def test_cli_lists_merge_sort(monkeypatch, capsys):
+    import sorting_visualizer
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: "4")
+    monkeypatch.setattr(sorting_visualizer.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(sorting_visualizer, "clear_console", lambda: None)
+
+    sorting_visualizer.main(["--values", "3,1,2", "--no-visualization"])
+
+    output = capsys.readouterr().out
+    assert "4. Merge Sort" in output
+    assert "[1, 2, 3]" in output
