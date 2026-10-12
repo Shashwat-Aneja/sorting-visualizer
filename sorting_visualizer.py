@@ -67,6 +67,35 @@ def selection_sort(arr, visualize=True):
     return arr
 
 
+def merge_sort(arr, visualize=True):
+    """Sort values in place using merge sort and return the same list."""
+    def sort(values):
+        if len(values) <= 1:
+            return values
+
+        middle = len(values) // 2
+        left = sort(values[:middle])
+        right = sort(values[middle:])
+        merged = []
+        left_index = right_index = 0
+
+        while left_index < len(left) and right_index < len(right):
+            if left[left_index] <= right[right_index]:
+                merged.append(left[left_index])
+                left_index += 1
+            else:
+                merged.append(right[right_index])
+                right_index += 1
+
+        merged.extend(left[left_index:])
+        merged.extend(right[right_index:])
+        render_step(merged, "Merge Sort (merge)", visualize)
+        return merged
+
+    arr[:] = sort(arr)
+    return arr
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Visualize sorting algorithms in the terminal")
     parser.add_argument("--values", type=parse_values, default=[5, 3, 8, 6, 2, 7, 4, 1], help="Comma-separated integers to sort")
@@ -77,6 +106,7 @@ def main(argv=None):
         "1": ("Bubble Sort", bubble_sort),
         "2": ("Insertion Sort", insertion_sort),
         "3": ("Selection Sort", selection_sort),
+        "4": ("Merge Sort", merge_sort),
     }
 
     print("Sorting Algorithm Visualizer")
@@ -86,7 +116,7 @@ def main(argv=None):
 
     choice = input("Enter choice: ")
     if choice not in algorithms:
-        print("Invalid choice. Please run the program again and select 1, 2, or 3.")
+        print("Invalid choice. Please run the program again and select 1, 2, 3, or 4.")
         return
 
     algo_name, algo_func = algorithms[choice]
