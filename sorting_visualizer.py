@@ -20,7 +20,8 @@ def print_array(arr, message="Sorting..."):
     clear_console()
     print(message)
     for value in arr:
-        print("#" * value)
+        bar = "#" * abs(value)
+        print(f"{value:>5} | {bar}")
     time.sleep(0.2)
 
 
