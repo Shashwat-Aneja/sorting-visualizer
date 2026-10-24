@@ -1,7 +1,7 @@
-from sorting_visualizer import bubble_sort, insertion_sort, merge_sort, selection_sort
+from sorting_visualizer import bubble_sort, insertion_sort, merge_sort, quick_sort, selection_sort
 
 
-SORTERS = (bubble_sort, insertion_sort, selection_sort, merge_sort)
+SORTERS = (bubble_sort, insertion_sort, selection_sort, merge_sort, quick_sort)
 
 
 def test_sorters_order_unsorted_values_without_visualization():
@@ -83,3 +83,28 @@ def test_cli_lists_merge_sort(monkeypatch, capsys):
     output = capsys.readouterr().out
     assert "4. Merge Sort" in output
     assert "[1, 2, 3]" in output
+
+
+def test_quick_sort_handles_large_duplicate_heavy_and_negative_inputs():
+    values = [((index * 17) % 23) - 11 for index in range(2500)]
+    values.extend([0] * 300)
+    expected = sorted(values)
+
+    result = quick_sort(values, visualize=False)
+
+    assert result is values
+    assert values == expected
+
+
+def test_quick_sort_cli_choice_is_available(monkeypatch, capsys):
+    import sorting_visualizer
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: "5")
+    monkeypatch.setattr(sorting_visualizer.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(sorting_visualizer, "clear_console", lambda: None)
+
+    sorting_visualizer.main(["--values", "3,-1,3,0", "--no-visualization"])
+
+    output = capsys.readouterr().out
+    assert "5. Quick Sort" in output
+    assert "[-1, 0, 3, 3]" in output
