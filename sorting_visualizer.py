@@ -97,6 +97,52 @@ def merge_sort(arr, visualize=True):
     return arr
 
 
+def quick_sort(arr, visualize=True):
+    """Sort in place using iterative three-way quicksort.
+
+    Three-way partitioning handles duplicate-heavy inputs efficiently, while an
+    explicit stack avoids Python recursion-depth failures on large inputs.
+    """
+    if len(arr) < 2:
+        return arr
+
+    pending = [(0, len(arr) - 1)]
+    while pending:
+        low, high = pending.pop()
+        while low < high:
+            pivot = arr[(low + high) // 2]
+            lower, current, upper = low, low, high
+
+            while current <= upper:
+                render_step(arr, f"Quick Sort (pivot={pivot})", visualize)
+                if arr[current] < pivot:
+                    arr[lower], arr[current] = arr[current], arr[lower]
+                    lower += 1
+                    current += 1
+                elif arr[current] > pivot:
+                    arr[current], arr[upper] = arr[upper], arr[current]
+                    upper -= 1
+                else:
+                    current += 1
+
+            left = (low, lower - 1)
+            right = (upper + 1, high)
+            left_size = left[1] - left[0]
+            right_size = right[1] - right[0]
+
+            # Process the smaller partition immediately to bound stack growth.
+            if left_size < right_size:
+                if right[0] < right[1]:
+                    pending.append(right)
+                low, high = left
+            else:
+                if left[0] < left[1]:
+                    pending.append(left)
+                low, high = right
+
+    return arr
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Visualize sorting algorithms in the terminal")
     parser.add_argument("--values", type=parse_values, default=[5, 3, 8, 6, 2, 7, 4, 1], help="Comma-separated integers to sort")
@@ -108,6 +154,7 @@ def main(argv=None):
         "2": ("Insertion Sort", insertion_sort),
         "3": ("Selection Sort", selection_sort),
         "4": ("Merge Sort", merge_sort),
+        "5": ("Quick Sort", quick_sort),
     }
 
     print("Sorting Algorithm Visualizer")
@@ -117,7 +164,7 @@ def main(argv=None):
 
     choice = input("Enter choice: ")
     if choice not in algorithms:
-        print("Invalid choice. Please run the program again and select 1, 2, 3, or 4.")
+        print("Invalid choice. Please run the program again and select 1, 2, 3, 4, or 5.")
         return
 
     algo_name, algo_func = algorithms[choice]
