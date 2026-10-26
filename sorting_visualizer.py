@@ -147,6 +147,11 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="Visualize sorting algorithms in the terminal")
     parser.add_argument("--values", type=parse_values, default=[5, 3, 8, 6, 2, 7, 4, 1], help="Comma-separated integers to sort")
     parser.add_argument("--no-visualization", action="store_true", help="Sort and print the result without animation")
+    parser.add_argument(
+        "--algorithm",
+        choices=("bubble", "insertion", "selection", "merge", "quick"),
+        help="Run an algorithm directly without prompting (useful for scripts)",
+    )
     args = parser.parse_args(argv)
     arr = args.values
     algorithms = {
@@ -158,11 +163,20 @@ def main(argv=None):
     }
 
     print("Sorting Algorithm Visualizer")
-    print("Choose an algorithm:")
-    for key, (name, _) in algorithms.items():
-        print(f"{key}. {name}")
+    if args.algorithm is None:
+        print("Choose an algorithm:")
+        for key, (name, _) in algorithms.items():
+            print(f"{key}. {name}")
+        choice = input("Enter choice: ")
+    else:
+        choice = {
+            "bubble": "1",
+            "insertion": "2",
+            "selection": "3",
+            "merge": "4",
+            "quick": "5",
+        }[args.algorithm]
 
-    choice = input("Enter choice: ")
     if choice not in algorithms:
         print("Invalid choice. Please run the program again and select 1, 2, 3, 4, or 5.")
         return
