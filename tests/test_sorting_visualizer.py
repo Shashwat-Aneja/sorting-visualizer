@@ -127,3 +127,24 @@ def test_cli_runs_named_algorithm_without_prompt(monkeypatch, capsys):
     output = capsys.readouterr().out
     assert "Running Quick Sort" in output
     assert "[-1, 0, 3, 3]" in output
+
+
+def test_no_visualization_skips_delays_and_terminal_clearing(monkeypatch, capsys):
+    import sorting_visualizer
+
+    def fail_sleep(_seconds):
+        raise AssertionError("non-visual mode must not sleep")
+
+    def fail_clear():
+        raise AssertionError("non-visual mode must not clear the terminal")
+
+    monkeypatch.setattr(sorting_visualizer.time, "sleep", fail_sleep)
+    monkeypatch.setattr(sorting_visualizer, "clear_console", fail_clear)
+
+    sorting_visualizer.main(
+        ["--algorithm", "quick", "--values", "3,1,2", "--no-visualization"]
+    )
+
+    output = capsys.readouterr().out
+    assert "[1, 2, 3]" in output
+    assert "\x1b[2J" not in output
