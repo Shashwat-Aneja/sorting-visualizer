@@ -183,11 +183,13 @@ def main(argv=None):
 
     algo_name, algo_func = algorithms[choice]
     print(f"\nRunning {algo_name}...")
-    time.sleep(1)
+    if not args.no_visualization:
+        time.sleep(1)
 
     sorted_arr = algo_func(arr.copy(), visualize=not args.no_visualization)
 
-    clear_console()
+    if not args.no_visualization:
+        clear_console()
     print(f"{algo_name} Completed 🎉")
     print("Final Array:")
     print(sorted_arr)
