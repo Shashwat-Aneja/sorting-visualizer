@@ -148,3 +148,18 @@ def test_no_visualization_skips_delays_and_terminal_clearing(monkeypatch, capsys
     output = capsys.readouterr().out
     assert "[1, 2, 3]" in output
     assert "\x1b[2J" not in output
+
+
+
+def test_print_array_scales_large_values_to_a_bounded_bar_width(monkeypatch, capsys):
+    import sorting_visualizer
+
+    monkeypatch.setattr(sorting_visualizer, "clear_console", lambda: None)
+    monkeypatch.setattr(sorting_visualizer.time, "sleep", lambda _seconds: None)
+
+    sorting_visualizer.print_array([10**100, -(10**99), 0])
+
+    lines = capsys.readouterr().out.splitlines()
+    bars = [line.split("|", 1)[1].strip() for line in lines if "|" in line]
+    assert max(map(len, bars)) == sorting_visualizer.MAX_BAR_WIDTH
+    assert all(len(bar) <= sorting_visualizer.MAX_BAR_WIDTH for bar in bars)
