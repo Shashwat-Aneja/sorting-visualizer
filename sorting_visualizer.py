@@ -1,6 +1,8 @@
 import argparse
 import time
 
+MAX_BAR_WIDTH = 40
+
 
 def parse_values(raw):
     tokens = raw.split(",")
@@ -19,8 +21,13 @@ def clear_console():
 def print_array(arr, message="Sorting..."):
     clear_console()
     print(message)
+    max_magnitude = max((abs(value) for value in arr), default=0)
     for value in arr:
-        bar = "#" * abs(value)
+        magnitude = abs(value)
+        width = 0 if max_magnitude == 0 else (magnitude * MAX_BAR_WIDTH) // max_magnitude
+        if magnitude and width == 0:
+            width = 1
+        bar = "#" * width
         print(f"{value:>5} | {bar}")
     time.sleep(0.2)
 
