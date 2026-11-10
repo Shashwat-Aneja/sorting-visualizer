@@ -163,3 +163,25 @@ def test_print_array_scales_large_values_to_a_bounded_bar_width(monkeypatch, cap
     bars = [line.split("|", 1)[1].strip() for line in lines if "|" in line]
     assert max(map(len, bars)) == sorting_visualizer.MAX_BAR_WIDTH
     assert all(len(bar) <= sorting_visualizer.MAX_BAR_WIDTH for bar in bars)
+
+
+def test_cli_returns_success_exit_status_for_named_algorithm(capsys):
+    import sorting_visualizer
+
+    status = sorting_visualizer.main(
+        ["--algorithm", "merge", "--values", "4,1,3", "--no-visualization"]
+    )
+
+    assert status == 0
+    assert "[1, 3, 4]" in capsys.readouterr().out
+
+
+def test_cli_returns_nonzero_exit_status_for_invalid_menu_choice(monkeypatch, capsys):
+    import sorting_visualizer
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: "99")
+
+    status = sorting_visualizer.main(["--no-visualization"])
+
+    assert status == 2
+    assert "Invalid choice" in capsys.readouterr().out

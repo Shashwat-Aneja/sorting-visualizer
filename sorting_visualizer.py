@@ -186,7 +186,7 @@ def main(argv=None):
 
     if choice not in algorithms:
         print("Invalid choice. Please run the program again and select 1, 2, 3, 4, or 5.")
-        return
+        return 2
 
     algo_name, algo_func = algorithms[choice]
     print(f"\nRunning {algo_name}...")
@@ -200,7 +200,8 @@ def main(argv=None):
     print(f"{algo_name} Completed 🎉")
     print("Final Array:")
     print(sorted_arr)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
