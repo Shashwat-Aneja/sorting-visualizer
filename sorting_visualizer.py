@@ -174,7 +174,11 @@ def main(argv=None):
         print("Choose an algorithm:")
         for key, (name, _) in algorithms.items():
             print(f"{key}. {name}")
-        choice = input("Enter choice: ")
+        try:
+            choice = input("Enter choice: ").strip()
+        except EOFError:
+            print("No algorithm selected. Use --algorithm for non-interactive runs.")
+            return 2
     else:
         choice = {
             "bubble": "1",
