@@ -1,7 +1,17 @@
 import argparse
+import math
+from contextvars import ContextVar
 import time
 
 MAX_BAR_WIDTH = 40
+FRAME_DELAY = ContextVar("frame_delay", default=0.2)
+
+
+def animation_delay(raw):
+    value = float(raw)
+    if not math.isfinite(value) or value < 0 or value > 10:
+        raise argparse.ArgumentTypeError("Delay must be a finite number from 0 to 10 seconds")
+    return value
 
 
 def parse_values(raw):
@@ -29,7 +39,7 @@ def print_array(arr, message="Sorting..."):
             width = 1
         bar = "#" * width
         print(f"{value:>5} | {bar}")
-    time.sleep(0.2)
+    time.sleep(FRAME_DELAY.get())
 
 
 def render_step(arr, message, enabled):
@@ -159,6 +169,7 @@ def main(argv=None):
         choices=("bubble", "insertion", "selection", "merge", "quick"),
         help="Run an algorithm directly without prompting (useful for scripts)",
     )
+    parser.add_argument("--delay", type=animation_delay, default=0.2, help="Animation frame delay in seconds (0–10)")
     args = parser.parse_args(argv)
     arr = args.values
     algorithms = {
@@ -197,7 +208,11 @@ def main(argv=None):
     if not args.no_visualization:
         time.sleep(1)
 
-    sorted_arr = algo_func(arr.copy(), visualize=not args.no_visualization)
+    token = FRAME_DELAY.set(args.delay)
+    try:
+        sorted_arr = algo_func(arr.copy(), visualize=not args.no_visualization)
+    finally:
+        FRAME_DELAY.reset(token)
 
     if not args.no_visualization:
         clear_console()
@@ -209,3 +224,4 @@ def main(argv=None):
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
