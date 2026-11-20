@@ -1,4 +1,5 @@
 import argparse
+import json
 import math
 from contextvars import ContextVar
 import time
@@ -170,7 +171,15 @@ def main(argv=None):
         help="Run an algorithm directly without prompting (useful for scripts)",
     )
     parser.add_argument("--delay", type=animation_delay, default=0.2, help="Animation frame delay in seconds (0–10)")
+    parser.add_argument("--json", action="store_true", help="Print only machine-readable output; requires --algorithm and disables animation")
     args = parser.parse_args(argv)
+    if args.json:
+        if args.algorithm is None:
+            parser.error("--json requires --algorithm")
+        functions = {"bubble": bubble_sort, "insertion": insertion_sort, "selection": selection_sort, "merge": merge_sort, "quick": quick_sort}
+        result = functions[args.algorithm](args.values.copy(), visualize=False)
+        print(json.dumps({"algorithm": args.algorithm, "values": result}))
+        return 0
     arr = args.values
     algorithms = {
         "1": ("Bubble Sort", bubble_sort),

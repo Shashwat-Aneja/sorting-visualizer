@@ -100,3 +100,5 @@ The tests cover all three algorithms, empty and single-item lists, duplicate val
 
 
 Use `--delay 0.05` to control animation speed (0–10 seconds per frame). The choice is scoped to the run; `--no-visualization` continues to skip all animation delays.
+
+`--algorithm quick --json` emits only a JSON object with the selected algorithm and sorted values. JSON mode never prompts, clears the terminal or sleeps.
