@@ -1,7 +1,18 @@
 import argparse
+import json
+import math
+from contextvars import ContextVar
 import time
 
 MAX_BAR_WIDTH = 40
+FRAME_DELAY = ContextVar("frame_delay", default=0.2)
+
+
+def animation_delay(raw):
+    value = float(raw)
+    if not math.isfinite(value) or value < 0 or value > 10:
+        raise argparse.ArgumentTypeError("Delay must be a finite number from 0 to 10 seconds")
+    return value
 
 
 def parse_values(raw):
@@ -29,7 +40,7 @@ def print_array(arr, message="Sorting..."):
             width = 1
         bar = "#" * width
         print(f"{value:>5} | {bar}")
-    time.sleep(0.2)
+    time.sleep(FRAME_DELAY.get())
 
 
 def render_step(arr, message, enabled):
@@ -37,13 +48,17 @@ def render_step(arr, message, enabled):
         print_array(arr, message=message)
 
 
-def bubble_sort(arr, visualize=True):
+def _less(left, right, reverse):
+    return left > right if reverse else left < right
+
+
+def bubble_sort(arr, visualize=True, reverse=False):
     n = len(arr)
     for i in range(n):
         swapped = False
         for j in range(0, n - i - 1):
             render_step(arr, f"Bubble Sort (i={i}, j={j})", visualize)
-            if arr[j] > arr[j + 1]:
+            if _less(arr[j + 1], arr[j], reverse):
                 arr[j], arr[j + 1] = arr[j + 1], arr[j]
                 swapped = True
         if not swapped:
@@ -51,12 +66,12 @@ def bubble_sort(arr, visualize=True):
     return arr
 
 
-def insertion_sort(arr, visualize=True):
+def insertion_sort(arr, visualize=True, reverse=False):
     for i in range(1, len(arr)):
         key = arr[i]
         j = i - 1
         render_step(arr, f"Insertion Sort (i={i})", visualize)
-        while j >= 0 and key < arr[j]:
+        while j >= 0 and _less(key, arr[j], reverse):
             arr[j + 1] = arr[j]
             j -= 1
             render_step(arr, "Insertion Sort", visualize)
@@ -64,18 +79,18 @@ def insertion_sort(arr, visualize=True):
     return arr
 
 
-def selection_sort(arr, visualize=True):
+def selection_sort(arr, visualize=True, reverse=False):
     for i in range(len(arr)):
         min_idx = i
         for j in range(i + 1, len(arr)):
             render_step(arr, f"Selection Sort (i={i}, j={j})", visualize)
-            if arr[j] < arr[min_idx]:
+            if _less(arr[j], arr[min_idx], reverse):
                 min_idx = j
         arr[i], arr[min_idx] = arr[min_idx], arr[i]
     return arr
 
 
-def merge_sort(arr, visualize=True):
+def merge_sort(arr, visualize=True, reverse=False):
     """Sort values in place using merge sort and return the same list."""
     def sort(values):
         if len(values) <= 1:
@@ -88,7 +103,7 @@ def merge_sort(arr, visualize=True):
         left_index = right_index = 0
 
         while left_index < len(left) and right_index < len(right):
-            if left[left_index] <= right[right_index]:
+            if not _less(right[right_index], left[left_index], reverse):
                 merged.append(left[left_index])
                 left_index += 1
             else:
@@ -104,7 +119,7 @@ def merge_sort(arr, visualize=True):
     return arr
 
 
-def quick_sort(arr, visualize=True):
+def quick_sort(arr, visualize=True, reverse=False):
     """Sort in place using iterative three-way quicksort.
 
     Three-way partitioning handles duplicate-heavy inputs efficiently, while an
@@ -122,11 +137,11 @@ def quick_sort(arr, visualize=True):
 
             while current <= upper:
                 render_step(arr, f"Quick Sort (pivot={pivot})", visualize)
-                if arr[current] < pivot:
+                if _less(arr[current], pivot, reverse):
                     arr[lower], arr[current] = arr[current], arr[lower]
                     lower += 1
                     current += 1
-                elif arr[current] > pivot:
+                elif _less(pivot, arr[current], reverse):
                     arr[current], arr[upper] = arr[upper], arr[current]
                     upper -= 1
                 else:
@@ -159,7 +174,17 @@ def main(argv=None):
         choices=("bubble", "insertion", "selection", "merge", "quick"),
         help="Run an algorithm directly without prompting (useful for scripts)",
     )
+    parser.add_argument("--delay", type=animation_delay, default=0.2, help="Animation frame delay in seconds (0–10)")
+    parser.add_argument("--json", action="store_true", help="Print only machine-readable output; requires --algorithm and disables animation")
+    parser.add_argument("--descending", action="store_true", help="Sort highest-to-lowest with the selected algorithm")
     args = parser.parse_args(argv)
+    if args.json:
+        if args.algorithm is None:
+            parser.error("--json requires --algorithm")
+        functions = {"bubble": bubble_sort, "insertion": insertion_sort, "selection": selection_sort, "merge": merge_sort, "quick": quick_sort}
+        result = functions[args.algorithm](args.values.copy(), visualize=False, reverse=args.descending)
+        print(json.dumps({"algorithm": args.algorithm, "values": result}))
+        return 0
     arr = args.values
     algorithms = {
         "1": ("Bubble Sort", bubble_sort),
@@ -197,7 +222,11 @@ def main(argv=None):
     if not args.no_visualization:
         time.sleep(1)
 
-    sorted_arr = algo_func(arr.copy(), visualize=not args.no_visualization)
+    token = FRAME_DELAY.set(args.delay)
+    try:
+        sorted_arr = algo_func(arr.copy(), visualize=not args.no_visualization, reverse=args.descending)
+    finally:
+        FRAME_DELAY.reset(token)
 
     if not args.no_visualization:
         clear_console()
@@ -209,3 +238,4 @@ def main(argv=None):
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
