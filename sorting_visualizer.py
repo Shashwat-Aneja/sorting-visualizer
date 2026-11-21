@@ -1,4 +1,5 @@
 import argparse
+import sys
 import json
 import math
 from contextvars import ContextVar
@@ -165,7 +166,7 @@ def quick_sort(arr, visualize=True, reverse=False):
     return arr
 
 
-def main(argv=None):
+def _main(argv=None):
     parser = argparse.ArgumentParser(description="Visualize sorting algorithms in the terminal")
     parser.add_argument("--values", type=parse_values, default=[5, 3, 8, 6, 2, 7, 4, 1], help="Comma-separated integers to sort")
     parser.add_argument("--no-visualization", action="store_true", help="Sort and print the result without animation")
@@ -234,6 +235,14 @@ def main(argv=None):
     print("Final Array:")
     print(sorted_arr)
     return 0
+
+
+def main(argv=None):
+    try:
+        return _main(argv)
+    except KeyboardInterrupt:
+        print("Sorting interrupted.", file=sys.stderr)
+        return 130
 
 
 if __name__ == "__main__":
