@@ -104,3 +104,5 @@ Use `--delay 0.05` to control animation speed (0–10 seconds per frame). The ch
 `--algorithm quick --json` emits only a JSON object with the selected algorithm and sorted values. JSON mode never prompts, clears the terminal or sleeps.
 
 `--descending` runs the chosen algorithm highest-to-lowest, including its intermediate animation. The programmatic sort functions accept `reverse=True` and still mutate and return the same list.
+
+Heap sort is available as menu option 6 or `--algorithm heap`. It supports animation, JSON output and descending comparisons, with O(n log n) work and constant auxiliary storage.
