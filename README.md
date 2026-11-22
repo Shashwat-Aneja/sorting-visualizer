@@ -106,3 +106,5 @@ Use `--delay 0.05` to control animation speed (0–10 seconds per frame). The ch
 `--descending` runs the chosen algorithm highest-to-lowest, including its intermediate animation. The programmatic sort functions accept `reverse=True` and still mutate and return the same list.
 
 Heap sort is available as menu option 6 or `--algorithm heap`. It supports animation, JSON output and descending comparisons, with O(n log n) work and constant auxiliary storage.
+
+`--values-file values.txt` reads comma- or whitespace-separated integers from UTF-8 text, avoiding command-line length limits. It is mutually exclusive with `--values` and supports every algorithm and output mode. The file is read without modification.
