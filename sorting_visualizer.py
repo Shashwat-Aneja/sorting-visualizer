@@ -1,4 +1,6 @@
 import argparse
+import re
+from pathlib import Path
 import sys
 import json
 import math
@@ -189,7 +191,9 @@ def heap_sort(arr, visualize=True, reverse=False):
 
 def _main(argv=None):
     parser = argparse.ArgumentParser(description="Visualize sorting algorithms in the terminal")
-    parser.add_argument("--values", type=parse_values, default=[5, 3, 8, 6, 2, 7, 4, 1], help="Comma-separated integers to sort")
+    inputs = parser.add_mutually_exclusive_group()
+    inputs.add_argument("--values", type=parse_values, default=[5, 3, 8, 6, 2, 7, 4, 1], help="Comma-separated integers to sort")
+    inputs.add_argument("--values-file", help="Read comma- or whitespace-separated integers from a UTF-8 file")
     parser.add_argument("--no-visualization", action="store_true", help="Sort and print the result without animation")
     parser.add_argument(
         "--algorithm",
@@ -200,6 +204,12 @@ def _main(argv=None):
     parser.add_argument("--json", action="store_true", help="Print only machine-readable output; requires --algorithm and disables animation")
     parser.add_argument("--descending", action="store_true", help="Sort highest-to-lowest with the selected algorithm")
     args = parser.parse_args(argv)
+    if args.values_file is not None:
+        try:
+            text = Path(args.values_file).expanduser().read_text(encoding="utf-8").strip()
+            args.values = parse_values(",".join(re.split(r"[,\s]+", text)))
+        except (OSError, ValueError) as exc:
+            parser.error(f"Could not read integer input: {exc}")
     if args.json:
         if args.algorithm is None:
             parser.error("--json requires --algorithm")
