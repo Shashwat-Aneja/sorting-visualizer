@@ -55,6 +55,22 @@ def _less(left, right, reverse):
     return left > right if reverse else left < right
 
 
+def shell_sort(arr, visualize=True, reverse=False):
+    """Sort in place by gapped insertion using a halving gap sequence."""
+    gap = len(arr) // 2
+    while gap:
+        for index in range(gap, len(arr)):
+            value = arr[index]
+            current = index
+            while current >= gap and _less(value, arr[current - gap], reverse):
+                arr[current] = arr[current - gap]
+                current -= gap
+                render_step(arr, f"Shell Sort (gap={gap})", visualize)
+            arr[current] = value
+        gap //= 2
+    return arr
+
+
 def bubble_sort(arr, visualize=True, reverse=False):
     n = len(arr)
     for i in range(n):
@@ -197,7 +213,7 @@ def _main(argv=None):
     parser.add_argument("--no-visualization", action="store_true", help="Sort and print the result without animation")
     parser.add_argument(
         "--algorithm",
-        choices=("bubble", "insertion", "selection", "merge", "quick", "heap"),
+        choices=("bubble", "insertion", "selection", "merge", "quick", "heap", "shell"),
         help="Run an algorithm directly without prompting (useful for scripts)",
     )
     parser.add_argument("--delay", type=animation_delay, default=0.2, help="Animation frame delay in seconds (0–10)")
@@ -213,7 +229,7 @@ def _main(argv=None):
     if args.json:
         if args.algorithm is None:
             parser.error("--json requires --algorithm")
-        functions = {"bubble": bubble_sort, "insertion": insertion_sort, "selection": selection_sort, "merge": merge_sort, "quick": quick_sort, "heap": heap_sort}
+        functions = {"bubble": bubble_sort, "insertion": insertion_sort, "selection": selection_sort, "merge": merge_sort, "quick": quick_sort, "heap": heap_sort, "shell": shell_sort}
         result = functions[args.algorithm](args.values.copy(), visualize=False, reverse=args.descending)
         print(json.dumps({"algorithm": args.algorithm, "values": result}))
         return 0
@@ -225,6 +241,7 @@ def _main(argv=None):
         "4": ("Merge Sort", merge_sort),
         "5": ("Quick Sort", quick_sort),
         "6": ("Heap Sort", heap_sort),
+        "7": ("Shell Sort", shell_sort),
     }
 
     print("Sorting Algorithm Visualizer")
@@ -245,10 +262,11 @@ def _main(argv=None):
             "merge": "4",
             "quick": "5",
             "heap": "6",
+            "shell": "7",
         }[args.algorithm]
 
     if choice not in algorithms:
-        print("Invalid choice. Please run the program again and select 1, 2, 3, 4, 5, or 6.")
+        print("Invalid choice. Please run the program again and select 1, 2, 3, 4, 5, 6, or 7.")
         return 2
 
     algo_name, algo_func = algorithms[choice]
