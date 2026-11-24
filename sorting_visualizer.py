@@ -1,3 +1,5 @@
+import os
+import tempfile
 import argparse
 import re
 from pathlib import Path
@@ -53,6 +55,22 @@ def render_step(arr, message, enabled):
 
 def _less(left, right, reverse):
     return left > right if reverse else left < right
+
+
+def shell_sort(arr, visualize=True, reverse=False):
+    """Sort in place by gapped insertion using a halving gap sequence."""
+    gap = len(arr) // 2
+    while gap:
+        for index in range(gap, len(arr)):
+            value = arr[index]
+            current = index
+            while current >= gap and _less(value, arr[current - gap], reverse):
+                arr[current] = arr[current - gap]
+                current -= gap
+                render_step(arr, f"Shell Sort (gap={gap})", visualize)
+            arr[current] = value
+        gap //= 2
+    return arr
 
 
 def bubble_sort(arr, visualize=True, reverse=False):
@@ -189,6 +207,29 @@ def heap_sort(arr, visualize=True, reverse=False):
     return arr
 
 
+def export_sorted_json(payload, destination, source=None):
+    destination = Path(destination).expanduser().resolve()
+    if source is not None:
+        source = Path(source).expanduser().resolve()
+        if destination == source or (destination.exists() and destination.samefile(source)):
+            raise ValueError("Sorted output must differ from the input values file.")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=destination.parent, delete=False) as handle:
+            temporary = Path(handle.name)
+            json.dump(payload, handle, allow_nan=False)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, destination)
+    finally:
+        if temporary is not None:
+            try:
+                temporary.unlink()
+            except FileNotFoundError:
+                pass
+
+
 def _main(argv=None):
     parser = argparse.ArgumentParser(description="Visualize sorting algorithms in the terminal")
     inputs = parser.add_mutually_exclusive_group()
@@ -197,12 +238,13 @@ def _main(argv=None):
     parser.add_argument("--no-visualization", action="store_true", help="Sort and print the result without animation")
     parser.add_argument(
         "--algorithm",
-        choices=("bubble", "insertion", "selection", "merge", "quick", "heap"),
+        choices=("bubble", "insertion", "selection", "merge", "quick", "heap", "shell"),
         help="Run an algorithm directly without prompting (useful for scripts)",
     )
     parser.add_argument("--delay", type=animation_delay, default=0.2, help="Animation frame delay in seconds (0–10)")
     parser.add_argument("--json", action="store_true", help="Print only machine-readable output; requires --algorithm and disables animation")
     parser.add_argument("--descending", action="store_true", help="Sort highest-to-lowest with the selected algorithm")
+    parser.add_argument("--output", help="Atomically save sorted JSON; implies unattended JSON mode and requires --algorithm")
     args = parser.parse_args(argv)
     if args.values_file is not None:
         try:
@@ -210,12 +252,18 @@ def _main(argv=None):
             args.values = parse_values(",".join(re.split(r"[,\s]+", text)))
         except (OSError, ValueError) as exc:
             parser.error(f"Could not read integer input: {exc}")
-    if args.json:
+    if args.json or args.output:
         if args.algorithm is None:
             parser.error("--json requires --algorithm")
-        functions = {"bubble": bubble_sort, "insertion": insertion_sort, "selection": selection_sort, "merge": merge_sort, "quick": quick_sort, "heap": heap_sort}
+        functions = {"bubble": bubble_sort, "insertion": insertion_sort, "selection": selection_sort, "merge": merge_sort, "quick": quick_sort, "heap": heap_sort, "shell": shell_sort}
         result = functions[args.algorithm](args.values.copy(), visualize=False, reverse=args.descending)
-        print(json.dumps({"algorithm": args.algorithm, "values": result}))
+        payload = {"algorithm": args.algorithm, "values": result}
+        if args.output:
+            try:
+                export_sorted_json(payload, args.output, args.values_file)
+            except (OSError, ValueError) as exc:
+                parser.error(str(exc))
+        print(json.dumps(payload))
         return 0
     arr = args.values
     algorithms = {
@@ -225,6 +273,7 @@ def _main(argv=None):
         "4": ("Merge Sort", merge_sort),
         "5": ("Quick Sort", quick_sort),
         "6": ("Heap Sort", heap_sort),
+        "7": ("Shell Sort", shell_sort),
     }
 
     print("Sorting Algorithm Visualizer")
@@ -245,10 +294,11 @@ def _main(argv=None):
             "merge": "4",
             "quick": "5",
             "heap": "6",
+            "shell": "7",
         }[args.algorithm]
 
     if choice not in algorithms:
-        print("Invalid choice. Please run the program again and select 1, 2, 3, 4, 5, or 6.")
+        print("Invalid choice. Please run the program again and select 1, 2, 3, 4, 5, 6, or 7.")
         return 2
 
     algo_name, algo_func = algorithms[choice]

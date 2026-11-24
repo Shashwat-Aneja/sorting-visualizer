@@ -108,3 +108,7 @@ Use `--delay 0.05` to control animation speed (0–10 seconds per frame). The ch
 Heap sort is available as menu option 6 or `--algorithm heap`. It supports animation, JSON output and descending comparisons, with O(n log n) work and constant auxiliary storage.
 
 `--values-file values.txt` reads comma- or whitespace-separated integers from UTF-8 text, avoiding command-line length limits. It is mutually exclusive with `--values` and supports every algorithm and output mode. The file is read without modification.
+
+Shell sort is available as interactive option 7 or `--algorithm shell`, including JSON and descending workflows. It uses gapped insertion with halving gaps, sorts the original list in place, and does not promise stable ordering of equal records.
+
+`--algorithm heap --values-file values.txt --output sorted.json` atomically saves sorted JSON and prints the same JSON without animation. An input file or its hard-link alias cannot be used as output. Failed replacement preserves prior output and removes temporary files.
