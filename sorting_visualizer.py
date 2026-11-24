@@ -1,3 +1,5 @@
+import os
+import tempfile
 import argparse
 import re
 from pathlib import Path
@@ -205,6 +207,29 @@ def heap_sort(arr, visualize=True, reverse=False):
     return arr
 
 
+def export_sorted_json(payload, destination, source=None):
+    destination = Path(destination).expanduser().resolve()
+    if source is not None:
+        source = Path(source).expanduser().resolve()
+        if destination == source or (destination.exists() and destination.samefile(source)):
+            raise ValueError("Sorted output must differ from the input values file.")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=destination.parent, delete=False) as handle:
+            temporary = Path(handle.name)
+            json.dump(payload, handle, allow_nan=False)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, destination)
+    finally:
+        if temporary is not None:
+            try:
+                temporary.unlink()
+            except FileNotFoundError:
+                pass
+
+
 def _main(argv=None):
     parser = argparse.ArgumentParser(description="Visualize sorting algorithms in the terminal")
     inputs = parser.add_mutually_exclusive_group()
@@ -219,6 +244,7 @@ def _main(argv=None):
     parser.add_argument("--delay", type=animation_delay, default=0.2, help="Animation frame delay in seconds (0–10)")
     parser.add_argument("--json", action="store_true", help="Print only machine-readable output; requires --algorithm and disables animation")
     parser.add_argument("--descending", action="store_true", help="Sort highest-to-lowest with the selected algorithm")
+    parser.add_argument("--output", help="Atomically save sorted JSON; implies unattended JSON mode and requires --algorithm")
     args = parser.parse_args(argv)
     if args.values_file is not None:
         try:
@@ -226,12 +252,18 @@ def _main(argv=None):
             args.values = parse_values(",".join(re.split(r"[,\s]+", text)))
         except (OSError, ValueError) as exc:
             parser.error(f"Could not read integer input: {exc}")
-    if args.json:
+    if args.json or args.output:
         if args.algorithm is None:
             parser.error("--json requires --algorithm")
         functions = {"bubble": bubble_sort, "insertion": insertion_sort, "selection": selection_sort, "merge": merge_sort, "quick": quick_sort, "heap": heap_sort, "shell": shell_sort}
         result = functions[args.algorithm](args.values.copy(), visualize=False, reverse=args.descending)
-        print(json.dumps({"algorithm": args.algorithm, "values": result}))
+        payload = {"algorithm": args.algorithm, "values": result}
+        if args.output:
+            try:
+                export_sorted_json(payload, args.output, args.values_file)
+            except (OSError, ValueError) as exc:
+                parser.error(str(exc))
+        print(json.dumps(payload))
         return 0
     arr = args.values
     algorithms = {
