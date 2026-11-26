@@ -11,6 +11,7 @@ import time
 
 MAX_BAR_WIDTH = 40
 FRAME_DELAY = ContextVar("frame_delay", default=0.2)
+FRAME_BUDGET = ContextVar("frame_budget", default=None)
 
 
 def animation_delay(raw):
@@ -50,6 +51,11 @@ def print_array(arr, message="Sorting..."):
 
 def render_step(arr, message, enabled):
     if enabled:
+        remaining = FRAME_BUDGET.get()
+        if remaining is not None:
+            if remaining <= 0:
+                return
+            FRAME_BUDGET.set(remaining - 1)
         print_array(arr, message=message)
 
 
@@ -245,7 +251,10 @@ def _main(argv=None):
     parser.add_argument("--json", action="store_true", help="Print only machine-readable output; requires --algorithm and disables animation")
     parser.add_argument("--descending", action="store_true", help="Sort highest-to-lowest with the selected algorithm")
     parser.add_argument("--output", help="Atomically save sorted JSON; implies unattended JSON mode and requires --algorithm")
+    parser.add_argument("--max-frames", type=int, help="Maximum animated frames while allowing the sort to finish; zero disables animation")
     args = parser.parse_args(argv)
+    if args.max_frames is not None and args.max_frames < 0:
+        parser.error("--max-frames must be non-negative")
     if args.values_file is not None:
         try:
             text = Path(args.values_file).expanduser().read_text(encoding="utf-8").strip()
@@ -276,6 +285,7 @@ def _main(argv=None):
         "7": ("Shell Sort", shell_sort),
     }
 
+    visualize = not args.no_visualization and args.max_frames != 0
     print("Sorting Algorithm Visualizer")
     if args.algorithm is None:
         print("Choose an algorithm:")
@@ -303,16 +313,18 @@ def _main(argv=None):
 
     algo_name, algo_func = algorithms[choice]
     print(f"\nRunning {algo_name}...")
-    if not args.no_visualization:
+    if visualize:
         time.sleep(1)
 
     token = FRAME_DELAY.set(args.delay)
+    budget_token = FRAME_BUDGET.set(args.max_frames)
     try:
-        sorted_arr = algo_func(arr.copy(), visualize=not args.no_visualization, reverse=args.descending)
+        sorted_arr = algo_func(arr.copy(), visualize=visualize, reverse=args.descending)
     finally:
         FRAME_DELAY.reset(token)
+        FRAME_BUDGET.reset(budget_token)
 
-    if not args.no_visualization:
+    if visualize:
         clear_console()
     print(f"{algo_name} Completed 🎉")
     print("Final Array:")
