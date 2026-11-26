@@ -114,3 +114,5 @@ Shell sort is available as interactive option 7 or `--algorithm shell`, includin
 `--algorithm heap --values-file values.txt --output sorted.json` atomically saves sorted JSON and prints the same JSON without animation. An input file or its hard-link alias cannot be used as output. Failed replacement preserves prior output and removes temporary files.
 
 `--max-frames N` bounds animation rendering while the selected algorithm still sorts the full input. Zero disables animation and its startup delay. The budget is scoped to a CLI invocation and restored even when sorting is interrupted; JSON remains animation-free. This does not bound algorithm comparison work.
+
+Sorting inputs are limited to 100000 values. Values files are read as regular files with an 8 MiB byte limit before UTF-8 decoding; nonblocking opens reject FIFOs where supported. Over-budget inputs fail before sorting or output replacement, preserving source and prior reports.

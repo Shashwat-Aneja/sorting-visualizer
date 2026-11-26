@@ -1,3 +1,4 @@
+import stat
 import os
 import tempfile
 import argparse
@@ -10,6 +11,8 @@ from contextvars import ContextVar
 import time
 
 MAX_BAR_WIDTH = 40
+MAX_INPUT_VALUES = 100000
+MAX_INPUT_BYTES = 8 * 1024 * 1024
 FRAME_DELAY = ContextVar("frame_delay", default=0.2)
 FRAME_BUDGET = ContextVar("frame_budget", default=None)
 
@@ -22,6 +25,8 @@ def animation_delay(raw):
 
 
 def parse_values(raw):
+    if raw.count(",") + 1 > MAX_INPUT_VALUES:
+        raise ValueError("Sorting input exceeds the 100000-value budget")
     tokens = raw.split(",")
     if not tokens or any(not token.strip() for token in tokens):
         raise ValueError("provide comma-separated integers without empty values")
@@ -213,6 +218,17 @@ def heap_sort(arr, visualize=True, reverse=False):
     return arr
 
 
+def read_values_file(path):
+    descriptor = os.open(Path(path).expanduser(), os.O_RDONLY | getattr(os, "O_NONBLOCK", 0))
+    with os.fdopen(descriptor, "rb") as source:
+        if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
+            raise ValueError("Sorting input must be a regular file")
+        data = source.read(MAX_INPUT_BYTES + 1)
+        if len(data) > MAX_INPUT_BYTES:
+            raise ValueError("Sorting input exceeds the 8 MiB file budget")
+    return data.decode("utf-8").strip()
+
+
 def export_sorted_json(payload, destination, source=None):
     destination = Path(destination).expanduser().resolve()
     if source is not None:
@@ -257,7 +273,7 @@ def _main(argv=None):
         parser.error("--max-frames must be non-negative")
     if args.values_file is not None:
         try:
-            text = Path(args.values_file).expanduser().read_text(encoding="utf-8").strip()
+            text = read_values_file(args.values_file)
             args.values = parse_values(",".join(re.split(r"[,\s]+", text)))
         except (OSError, ValueError) as exc:
             parser.error(f"Could not read integer input: {exc}")
