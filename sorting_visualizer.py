@@ -286,6 +286,7 @@ def _main(argv=None):
     parser.add_argument("--descending", action="store_true", help="Sort highest-to-lowest with the selected algorithm")
     parser.add_argument("--output", help="Atomically save sorted JSON; implies unattended JSON mode and requires --algorithm")
     parser.add_argument("--max-frames", type=int, help="Maximum animated frames while allowing the sort to finish; zero disables animation")
+    parser.add_argument("--unique", action="store_true", help="Sort distinct input values and disclose the original population")
     args = parser.parse_args(argv)
     if args.max_frames is not None and args.max_frames < 0:
         parser.error("--max-frames must be non-negative")
@@ -295,6 +296,9 @@ def _main(argv=None):
             args.values = parse_values(",".join(re.split(r"[,\s]+", text)))
         except (OSError, ValueError) as exc:
             parser.error(f"Could not read integer input: {exc}")
+    input_count = len(args.values)
+    if args.unique:
+        args.values = list(dict.fromkeys(args.values))
     if args.json or args.output:
         if args.algorithm is None:
             parser.error("--json requires --algorithm")
@@ -304,6 +308,8 @@ def _main(argv=None):
         except ValueError as exc:
             parser.error(str(exc))
         payload = {"algorithm": args.algorithm, "values": result}
+        if args.unique:
+            payload.update(input_count=input_count, unique_count=len(result))
         if args.output:
             try:
                 export_sorted_json(payload, args.output, args.values_file)
@@ -311,6 +317,8 @@ def _main(argv=None):
                 parser.error(str(exc))
         print(json.dumps(payload))
         return 0
+    if args.unique:
+        print(f"Sorting {len(args.values)} distinct values from {input_count} input values.")
     arr = args.values
     algorithms = {
         "1": ("Bubble Sort", bubble_sort),

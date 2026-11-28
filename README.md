@@ -118,3 +118,5 @@ Shell sort is available as interactive option 7 or `--algorithm shell`, includin
 Sorting inputs are limited to 100000 values. Values files are read as regular files with an 8 MiB byte limit before UTF-8 decoding; nonblocking opens reject FIFOs where supported. Over-budget inputs fail before sorting or output replacement, preserving source and prior reports.
 
 `--algorithm counting` adds integer counting sort, including negative and repeated values and descending order. It bounds allocation to a value span of 1,000,000 and the existing 100,000-value input limit. This educational algorithm renders its final counted array and respects normal animation controls.
+
+`--unique` sorts distinct integer values with any algorithm, in either direction. Input limits apply before deduplication. JSON/output reports add original `input_count` and `unique_count`; defaults keep duplicate values.
