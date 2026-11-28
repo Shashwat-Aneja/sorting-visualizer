@@ -68,6 +68,24 @@ def _less(left, right, reverse):
     return left > right if reverse else left < right
 
 
+def counting_sort(arr, visualize=True, reverse=False):
+    """Stable-value integer counting sort with a bounded allocation range."""
+    if len(arr) > MAX_INPUT_VALUES or any(isinstance(v, bool) or not isinstance(v, int) for v in arr):
+        raise ValueError("Counting sort requires at most 100000 integer values.")
+    if not arr:
+        return arr
+    low, high = min(arr), max(arr)
+    if high - low > 1_000_000:
+        raise ValueError("Counting sort value span must not exceed 1000000.")
+    counts = [0] * (high - low + 1)
+    for value in arr:
+        counts[value - low] += 1
+    values = range(len(counts) - 1, -1, -1) if reverse else range(len(counts))
+    arr[:] = [index + low for index in values for _ in range(counts[index])]
+    render_step(arr, "Counting Sort complete", visualize)
+    return arr
+
+
 def shell_sort(arr, visualize=True, reverse=False):
     """Sort in place by gapped insertion using a halving gap sequence."""
     gap = len(arr) // 2
@@ -260,7 +278,7 @@ def _main(argv=None):
     parser.add_argument("--no-visualization", action="store_true", help="Sort and print the result without animation")
     parser.add_argument(
         "--algorithm",
-        choices=("bubble", "insertion", "selection", "merge", "quick", "heap", "shell"),
+        choices=("bubble", "insertion", "selection", "merge", "quick", "heap", "shell", "counting"),
         help="Run an algorithm directly without prompting (useful for scripts)",
     )
     parser.add_argument("--delay", type=animation_delay, default=0.2, help="Animation frame delay in seconds (0–10)")
@@ -268,6 +286,7 @@ def _main(argv=None):
     parser.add_argument("--descending", action="store_true", help="Sort highest-to-lowest with the selected algorithm")
     parser.add_argument("--output", help="Atomically save sorted JSON; implies unattended JSON mode and requires --algorithm")
     parser.add_argument("--max-frames", type=int, help="Maximum animated frames while allowing the sort to finish; zero disables animation")
+    parser.add_argument("--unique", action="store_true", help="Sort distinct input values and disclose the original population")
     args = parser.parse_args(argv)
     if args.max_frames is not None and args.max_frames < 0:
         parser.error("--max-frames must be non-negative")
@@ -277,12 +296,20 @@ def _main(argv=None):
             args.values = parse_values(",".join(re.split(r"[,\s]+", text)))
         except (OSError, ValueError) as exc:
             parser.error(f"Could not read integer input: {exc}")
+    input_count = len(args.values)
+    if args.unique:
+        args.values = list(dict.fromkeys(args.values))
     if args.json or args.output:
         if args.algorithm is None:
             parser.error("--json requires --algorithm")
-        functions = {"bubble": bubble_sort, "insertion": insertion_sort, "selection": selection_sort, "merge": merge_sort, "quick": quick_sort, "heap": heap_sort, "shell": shell_sort}
-        result = functions[args.algorithm](args.values.copy(), visualize=False, reverse=args.descending)
+        functions = {"bubble": bubble_sort, "insertion": insertion_sort, "selection": selection_sort, "merge": merge_sort, "quick": quick_sort, "heap": heap_sort, "shell": shell_sort, "counting": counting_sort}
+        try:
+            result = functions[args.algorithm](args.values.copy(), visualize=False, reverse=args.descending)
+        except ValueError as exc:
+            parser.error(str(exc))
         payload = {"algorithm": args.algorithm, "values": result}
+        if args.unique:
+            payload.update(input_count=input_count, unique_count=len(result))
         if args.output:
             try:
                 export_sorted_json(payload, args.output, args.values_file)
@@ -290,6 +317,8 @@ def _main(argv=None):
                 parser.error(str(exc))
         print(json.dumps(payload))
         return 0
+    if args.unique:
+        print(f"Sorting {len(args.values)} distinct values from {input_count} input values.")
     arr = args.values
     algorithms = {
         "1": ("Bubble Sort", bubble_sort),
@@ -299,6 +328,7 @@ def _main(argv=None):
         "5": ("Quick Sort", quick_sort),
         "6": ("Heap Sort", heap_sort),
         "7": ("Shell Sort", shell_sort),
+        "8": ("Counting Sort", counting_sort),
     }
 
     visualize = not args.no_visualization and args.max_frames != 0
@@ -321,10 +351,11 @@ def _main(argv=None):
             "quick": "5",
             "heap": "6",
             "shell": "7",
+            "counting": "8",
         }[args.algorithm]
 
     if choice not in algorithms:
-        print("Invalid choice. Please run the program again and select 1, 2, 3, 4, 5, 6, or 7.")
+        print("Invalid choice. Please run the program again and select 1, 2, 3, 4, 5, 6, 7, or 8.")
         return 2
 
     algo_name, algo_func = algorithms[choice]
@@ -335,7 +366,10 @@ def _main(argv=None):
     token = FRAME_DELAY.set(args.delay)
     budget_token = FRAME_BUDGET.set(args.max_frames)
     try:
-        sorted_arr = algo_func(arr.copy(), visualize=visualize, reverse=args.descending)
+        try:
+            sorted_arr = algo_func(arr.copy(), visualize=visualize, reverse=args.descending)
+        except ValueError as exc:
+            parser.error(str(exc))
     finally:
         FRAME_DELAY.reset(token)
         FRAME_BUDGET.reset(budget_token)
